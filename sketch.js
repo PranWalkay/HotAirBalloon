@@ -1,94 +1,125 @@
-var balloon,balloonImage1,balloonImage2;
-var database;
-var height;
+var bg, bgImg,bgImg2;
+var bottomGround;
+var topGround;
+var balloon, balloonImg;
+var obstcaleTop,obstacleTopImg;
+var obstacleBottom,obstacleBottom1,obstacleBottom2;
+var gameOver,gameOverImg;
+var backgroundImg;
+var score = 0;
+var PLAY = 1;
+var END = 0;
+var gameState = PLAY;
 
 function preload(){
-   bg =loadImage("Images/cityImage.png");
-   balloonImage1=loadAnimation("Images/HotAirBallon01.png");
-   balloonImage2=loadAnimation("Images/HotAirBallon01.png","Images/HotAirBallon01.png",
-   "Images/HotAirBallon01.png","Images/HotAirBallon02.png","Images/HotAirBallon02.png",
-   "Images/HotAirBallon02.png","Images/HotAirBallon03.png","Images/HotAirBallon03.png","Images/HotAirBallon03.png");
-  }
+bgImg = loadImage("assets/bg.png");
+bgImg2 = loadImage("assets/bgImg2.jpeg");
+balloonImg = loadAnimation("assets/balloon1.png","assets/balloon2.png","assets/balloon3.png");
+obsTop1 = loadImage("assets/obsTop1.png");
+obsTop2 = loadImage("assets/obsTop2.png");
 
-//Function to set initial environment
-function setup() {
+obsBottom1 = loadImage("assets/obsBottom1.png");
+obsBottom2 = loadImage("assets/obsBottom2.png");
+obsBottom3 = loadImage("assets/obsBottom3.png");
 
-   database=firebase.database();
+gameOverImg = loadImage("assets/gameOver.png");
+restartImg = loadImage("assets/restart.png");
 
-  createCanvas(1500,700);
+jumpSound = loadSound("assets/jump.mp3");
+dieSound = loadSound("assets/die.mp3");
 
-  balloon=createSprite(250,650,150,150);
-  balloon.addAnimation("hotAirBalloon",balloonImage1);
-  balloon.scale=0.5;
-
-  var balloonHeight=database.ref('balloon/height');
-  balloonHeight.on("value",readHeight, showError);
-
-
-
-  textSize(20); 
 }
 
-// function to display UI
+function setup(){
+
+createCanvas(400,400);
+
+//background image
+bg = createSprite(165,485,1,1);
+bg.addImage(bgImg);
+bg.scale = 1.3;
+//getBackgroundImg();
+
+
+//creating top and bottom grounds
+bottomGround = createSprite(200,390,800,20);
+bottomGround.visible = false;
+
+topGround = createSprite(200,10,800,20);
+topGround.visible = false;
+      
+//creating balloon     
+balloon = createSprite(100,200,20,50);
+balloon.addAnimation("balloon",balloonImg);
+balloon.scale = 0.2;
+
+
+
+}
+
 function draw() {
-  background(bg);
+  
+  background("black");
+        
+          //making the hot air balloon jump
+          if(keyDown("space")) {
+            balloon.velocityY = -6 ;
+            
+          }
+    
+          //adding gravity
+           balloon.velocityY = balloon.velocityY + 2;
+    Bar();
+        drawSprites();
+    spawnObstaclesTop();
+        
+}
+function spawnObstaclesTop(){
+  if(World.frameCount%60 === 0){
+    obstacleTop = createSprite(400,50,40,50);
+    obstacleTop.scale = 0.1;
+    obstacleTop.velocityX = -4;
+    obstacleTop.y = Math.round(random(10,100));
 
-  if(keyDown(LEFT_ARROW)){
-    updateHeight(-10,0);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
+  var rand = Math.round(random(1,2));
+  switch(rand){
+    case 1: obstacleTop.addImage(obsTop1);
+            break;
+    case 2: obstacleTop.addImage(obsTop2);
+            break;
+    default:break;
   }
-  else if(keyDown(RIGHT_ARROW)){
-    updateHeight(10,0);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
+  obstacleTop.lifeTime = 100;
+  balloon.depth = balloon.depth + 1;
   }
-  else if(keyDown(UP_ARROW)){
-    updateHeight(0,-10);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
-    balloon.scale=balloon.scale -0.005;
-  }
-  else if(keyDown(DOWN_ARROW)){
-    updateHeight(0,+10);
-    balloon.addAnimation("hotAirBalloon",balloonImage2);
-    balloon.scale=balloon.scale+0.005;
-  }
-
-  drawSprites();
-  fill(0);
-  stroke("white");
-  textSize(25);
-  text("**Use arrow keys to move Hot Air Balloon!",40,40);
 }
 
- function updateHeight(x,y){
-   database.ref('balloon/height').set({
-     'x': height.x + x ,
-     'y': height.y + y
-   })
- }
+function Bar(){
+  if(World.frameCount % 60 === 0){
+    var bar = createSprite(400,200,10,800);
+    bar.velocityX = -6;
+    bar.depth = balloon.depth;
+    bar.lifetime = 70;
+    bar.visible = false;
+  }
+}
 
+async function getBackgroundImg(){
+  var response = await fetch("https://worldtimeapi.org/api/timezone/Europe/London");
+  var responseJSON = response.json();
 
-//CHOOSE THE CORRECT READHEIGHT FUNCTION
-// function readHeight(data){
-//   balloon.x = height.x;
-//   balloon.y = height.y;
-// }
+  var dateTime = responseJSON.datetime;
+  var hours = dateTime.slice(11,13);
+  
+   if(hours>=06 && hours<=19){
+     bg.addImage(bgImg);
+     bg.scale = 1.3
+   }else {
+    bg.addImage(bgImg2);
+    bg.scale = 1.5;
+    bg.x = 200;
+    bg.y = 200;
 
-function readHeight(data){
-   height = data.val();
-   balloon.x = height.x;
-  balloon.y = height.y;
- }
-
-// function readHeight(data){
-//   height = data.val();
-// }
-
-// function readHeight(){
-//   height = val();
-//   balloon.x = height.x;
-//   balloon.y = height.y;
-// }
-
-function showError(){
-  console.log("Error in writing to the database");
+   }
+  
 }
