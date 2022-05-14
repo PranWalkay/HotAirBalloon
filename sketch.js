@@ -66,15 +66,24 @@ topObstaclesGroup = new Group();
 bottomObstaclesGroup = new Group();
 barGroup = new Group();
 
+gameOver = createSprite(220,200);
+restart = createSprite(220,240);
+gameOver.addImage(gameOverImg);
+restart.addImage(restartImg);
+gameOver.scale = 0.5;
+restart.scale = 0.5;
+gameOver.visible = false;
+restart.visible = false;
+
 }
 
 function draw() {
   
-  background("black");
+  //background("black");
   if(gameState === PLAY){
     if(keyDown("space")) {
       balloon.velocityY = -6 ;
-      
+      jumpSound.play();
     }
 
     //adding gravity
@@ -88,6 +97,8 @@ spawnObstaclesBottom();
 if(topObstaclesGroup.isTouching(balloon) || balloon.isTouching(topGround) 
 || balloon.isTouching(bottomGround) || bottomObstaclesGroup.isTouching(balloon)){
   gameState = END;
+  dieSound.play();
+  
 }
   
   }
@@ -106,9 +117,13 @@ if(gameState === END){
   topObstaclesGroup.setLifetimeEach(-1);
   bottomObstaclesGroup.setLifetimeEach(-1);
   balloon.y = 200;
-
-  drawSprites();
+  if(mousePressedOver(restart)){
+    reset();
+  }
 }
+  drawSprites();
+  Score();
+
 }
 function spawnObstaclesTop(){
   if(World.frameCount%60 === 0){
@@ -186,3 +201,24 @@ async function getBackgroundImg(){
    }
   
 }
+
+
+function reset(){
+  gameState = PLAY;
+  gameOver.visible = false;
+  restart.visible = false;
+  topObstaclesGroup.destroyEach();
+  bottomObstaclesGroup.destroyEach();
+  score = 0;
+}
+
+function Score(){
+  if(balloon.isTouching(barGroup)){
+    score = score+1;
+  }
+  textFont("algerian");
+  textSize(30);
+  fill("yellow");
+  text("SCORE: "+ score,250,50);
+
+  }
